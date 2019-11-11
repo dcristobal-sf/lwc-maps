@@ -1,22 +1,25 @@
 import { LightningElement, track, api, wire } from 'lwc';
-import leaflet from '@salesforce/resourceUrl/leaflet_1_5_1';
+import leaflet_1_5_1 from '@salesforce/resourceUrl/leaflet_1_5_1';
 import { loadStyle, loadScript } from 'lightning/platformResourceLoader';
 import { subscribe } from 'lightning/empApi';
 
 /** Use Apex to fetch related records. */
 import { refreshApex } from '@salesforce/apex';
 /** getPlaces() method in PlaceController Apex class */
-import getPlaces from '@salesforce/apex/TAT_AirportController.getAirports';
+import getAirports from '@salesforce/apex/TAT_AirportController.getAirports';
 /** Pub-sub mechanism for sibling component communication. */
-import { registerListener, unregisterAllListeners, fireEvent } from 'c/pubsub';
+//import { registerListener, unregisterAllListeners, fireEvent } from 'c/pubsub';
 
 
 const BLUE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 52 52"><path fill="#3333CC" d="m26 2c-10.5 0-19 8.5-19 19.1 0 13.2 13.6 25.3 17.8 28.5 0.7 0.6 1.7 0.6 2.5 0 4.2-3.3 17.7-15.3 17.7-28.5 0-10.6-8.5-19.1-19-19.1z m0 27c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"></path></svg>';
 const RED_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 52 52"><path fill="#DB4437" d="m26 2c-10.5 0-19 8.5-19 19.1 0 13.2 13.6 25.3 17.8 28.5 0.7 0.6 1.7 0.6 2.5 0 4.2-3.3 17.7-15.3 17.7-28.5 0-10.6-8.5-19.1-19-19.1z m0 27c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"></path></svg>';
+const ORANGE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 52 52"><path fill="#FFA500" d="m26 2c-10.5 0-19 8.5-19 19.1 0 13.2 13.6 25.3 17.8 28.5 0.7 0.6 1.7 0.6 2.5 0 4.2-3.3 17.7-15.3 17.7-28.5 0-10.6-8.5-19.1-19-19.1z m0 27c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"></path></svg>';
+const GREEN_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 52 52"><path fill="#008000" d="m26 2c-10.5 0-19 8.5-19 19.1 0 13.2 13.6 25.3 17.8 28.5 0.7 0.6 1.7 0.6 2.5 0 4.2-3.3 17.7-15.3 17.7-28.5 0-10.6-8.5-19.1-19-19.1z m0 27c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"></path></svg>';
+
 const SELECTED_MARKER_CLASS = 'marker-selected';
 
 export default class LeafletMap extends LightningElement {
-	@track channelName = '/data/Place__ChangeEvent';
+	@track channelName = '/data/Airport__ChangeEvent';
 	@api latitude = 37.135277;
 	@api longitude = -3.6242785;
 	//@api markers = [{ latitude: 37.135277, longitude: -3.6242785},{ latitude: 37.1382467, longitude: -3.6266562}];
@@ -40,20 +43,25 @@ export default class LeafletMap extends LightningElement {
     }
 	
 	getIcon(value) {
-		/*if (value.Status__c === 'Red') {
+		if (value.Status__c === 'Red') {
 			return window.L.divIcon({
 				className: '',
 				html: RED_ICON
 			});
-		} else if (value.Status__c === 'Blue'){
+		} else if (value.Status__c === 'Green'){
 			return window.L.divIcon({
 				className: '',
-				html: BLUE_ICON
+				html: GREEN_ICON
 			});
-		} */
+		} else if (value.Status__c === 'Orange'){
+			return window.L.divIcon({
+				className: '',
+				html: ORANGE_ICON
+			});
+		} 
 		return window.L.divIcon({
 			className: '',
-			html: value.LocationIcon__c
+			html: BLUE_ICON
 		});
 	}
 
@@ -66,7 +74,7 @@ export default class LeafletMap extends LightningElement {
      */
 	wiredPlacesResult;
 
-	@wire(getPlaces)
+	@wire(getAirports)
 	wiredPlaces(result) {
 		this.wiredPlacesResult = result;
         if (result.data) {
@@ -95,8 +103,8 @@ export default class LeafletMap extends LightningElement {
 
 	renderedCallback() {
 		Promise.all([
-			loadScript(this, leaflet + '/leaflet.js'),
-			loadStyle(this, leaflet + '/leaflet.css')
+			loadScript(this, leaflet_1_5_1 + '/leaflet.js'),
+			loadStyle(this, leaflet_1_5_1 + '/leaflet.css')
 		])
 		.then(() => {
 			this.librariesLoaded = true;
@@ -140,7 +148,7 @@ export default class LeafletMap extends LightningElement {
 				});
 
 				this.places.forEach(place => {
-					const leafletMarker = window.L.marker([place.Location__Latitude__s, place.Location__Longitude__s], {icon: this.getIcon(place), riseOnHover:true, markerId: place.Id});
+					const leafletMarker = window.L.marker([place.Geolocation__Latitude__s, place.Geolocation__Longitude__s], {icon: this.getIcon(place), riseOnHover:true, markerId: place.Id});
 					//const popUpContent = `Property Blablablah. <a target="_blank" href="http://www.google.com/maps?layer=c&cbll=${marker.latitude},${marker.longitude}"></a>`;
 					//leafletMarker.bindPopup(popUpContent).openPopup();
 					this.leafletMarkers.push(leafletMarker);
