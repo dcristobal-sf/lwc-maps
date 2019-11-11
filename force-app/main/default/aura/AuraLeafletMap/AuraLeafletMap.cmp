@@ -1,0 +1,7 @@
+<aura:component implements="flexipage:availableForAllPageTypes,force:appHostable" access="global" >
+    <aura:attribute name="map" type="Object"/>
+    <ltng:require styles="/resource/leaflet/leaflet.css"
+        scripts="/resource/leaflet/leaflet.js"
+        afterScriptsLoaded="{!c.jsLoaded}" />
+    <div id="map" class="slds-align_absolute-center"></div>
+</aura:component>
